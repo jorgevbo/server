@@ -40,6 +40,7 @@ class MediaServerTableMap extends TableMap {
 		$this->addPrimaryKey('ID', 'Id', 'INTEGER', true, null, null);
 		$this->addColumn('CREATED_AT', 'CreatedAt', 'TIMESTAMP', false, null, null);
 		$this->addColumn('UPDATED_AT', 'UpdatedAt', 'TIMESTAMP', false, null, null);
+		$this->addColumn('HEARTBEAT_TIME', 'HeartbeatTime', 'TIMESTAMP', false, null, null);
 		$this->addColumn('HOSTNAME', 'Hostname', 'VARCHAR', false, 255, null);
 		$this->addColumn('DC', 'Dc', 'INTEGER', false, null, null);
 		$this->addColumn('CUSTOM_DATA', 'CustomData', 'LONGVARCHAR', false, null, null);

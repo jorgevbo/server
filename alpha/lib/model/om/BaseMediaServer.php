@@ -38,6 +38,12 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	protected $updated_at;
 
 	/**
+	 * The value for the heartbeat_time field.
+	 * @var        string
+	 */
+	protected $heartbeat_time;
+
+	/**
 	 * The value for the hostname field.
 	 * @var        string
 	 */
@@ -177,6 +183,46 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 				$dt = new DateTime($this->updated_at);
 			} catch (Exception $x) {
 				throw new PropelException("Internally stored date/time/timestamp value could not be converted to DateTime: " . var_export($this->updated_at, true), $x);
+			}
+		}
+
+		if ($format === null) {
+			// We cast here to maintain BC in API; obviously we will lose data if we're dealing with pre-/post-epoch dates.
+			return (int) $dt->format('U');
+		} elseif (strpos($format, '%') !== false) {
+			return strftime($format, $dt->format('U'));
+		} else {
+			return $dt->format($format);
+		}
+	}
+
+	/**
+	 * Get the [optionally formatted] temporal [heartbeat_time] column value.
+	 * 
+	 * This accessor only only work with unix epoch dates.  Consider enabling the propel.useDateTimeClass
+	 * option in order to avoid converstions to integers (which are limited in the dates they can express).
+	 *
+	 * @param      string $format The date/time format string (either date()-style or strftime()-style).
+	 *							If format is NULL, then the raw unix timestamp integer will be returned.
+	 * @return     mixed Formatted date/time value as string or (integer) unix timestamp (if format is NULL), NULL if column is NULL, and 0 if column value is 0000-00-00 00:00:00
+	 * @throws     PropelException - if unable to parse/validate the date/time value.
+	 */
+	public function getHeartbeatTime($format = 'Y-m-d H:i:s')
+	{
+		if ($this->heartbeat_time === null) {
+			return null;
+		}
+
+
+		if ($this->heartbeat_time === '0000-00-00 00:00:00') {
+			// while technically this is not a default value of NULL,
+			// this seems to be closest in meaning.
+			return null;
+		} else {
+			try {
+				$dt = new DateTime($this->heartbeat_time);
+			} catch (Exception $x) {
+				throw new PropelException("Internally stored date/time/timestamp value could not be converted to DateTime: " . var_export($this->heartbeat_time, true), $x);
 			}
 		}
 
@@ -342,6 +388,58 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	} // setUpdatedAt()
 
 	/**
+	 * Sets the value of [heartbeat_time] column to a normalized version of the date/time value specified.
+	 * 
+	 * @param      mixed $v string, integer (timestamp), or DateTime value.  Empty string will
+	 *						be treated as NULL for temporal objects.
+	 * @return     MediaServer The current object (for fluent API support)
+	 */
+	public function setHeartbeatTime($v)
+	{
+		if(!isset($this->oldColumnsValues[MediaServerPeer::HEARTBEAT_TIME]))
+			$this->oldColumnsValues[MediaServerPeer::HEARTBEAT_TIME] = $this->heartbeat_time;
+
+		// we treat '' as NULL for temporal objects because DateTime('') == DateTime('now')
+		// -- which is unexpected, to say the least.
+		if ($v === null || $v === '') {
+			$dt = null;
+		} elseif ($v instanceof DateTime) {
+			$dt = $v;
+		} else {
+			// some string/numeric value passed; we normalize that so that we can
+			// validate it.
+			try {
+				if (is_numeric($v)) { // if it's a unix timestamp
+					$dt = new DateTime('@'.$v, new DateTimeZone('UTC'));
+					// We have to explicitly specify and then change the time zone because of a
+					// DateTime bug: http://bugs.php.net/bug.php?id=43003
+					$dt->setTimeZone(new DateTimeZone(date_default_timezone_get()));
+				} else {
+					$dt = new DateTime($v);
+				}
+			} catch (Exception $x) {
+				throw new PropelException('Error parsing date/time value: ' . var_export($v, true), $x);
+			}
+		}
+
+		if ( $this->heartbeat_time !== null || $dt !== null ) {
+			// (nested ifs are a little easier to read in this case)
+
+			$currNorm = ($this->heartbeat_time !== null && $tmpDt = new DateTime($this->heartbeat_time)) ? $tmpDt->format('Y-m-d H:i:s') : null;
+			$newNorm = ($dt !== null) ? $dt->format('Y-m-d H:i:s') : null;
+
+			if ( ($currNorm !== $newNorm) // normalized values don't match 
+					)
+			{
+				$this->heartbeat_time = ($dt ? $dt->format('Y-m-d H:i:s') : null);
+				$this->modifiedColumns[] = MediaServerPeer::HEARTBEAT_TIME;
+			}
+		} // if either are not null
+
+		return $this;
+	} // setHeartbeatTime()
+
+	/**
 	 * Set the value of [hostname] column.
 	 * 
 	 * @param      string $v new value
@@ -437,14 +535,18 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	 */
 	public function hydrate($row, $startcol = 0, $rehydrate = false)
 	{
+		// Nullify cached objects
+		$this->m_custom_data = null;
+		
 		try {
 
 			$this->id = ($row[$startcol + 0] !== null) ? (int) $row[$startcol + 0] : null;
 			$this->created_at = ($row[$startcol + 1] !== null) ? (string) $row[$startcol + 1] : null;
 			$this->updated_at = ($row[$startcol + 2] !== null) ? (string) $row[$startcol + 2] : null;
-			$this->hostname = ($row[$startcol + 3] !== null) ? (string) $row[$startcol + 3] : null;
-			$this->dc = ($row[$startcol + 4] !== null) ? (int) $row[$startcol + 4] : null;
-			$this->custom_data = ($row[$startcol + 5] !== null) ? (string) $row[$startcol + 5] : null;
+			$this->heartbeat_time = ($row[$startcol + 3] !== null) ? (string) $row[$startcol + 3] : null;
+			$this->hostname = ($row[$startcol + 4] !== null) ? (string) $row[$startcol + 4] : null;
+			$this->dc = ($row[$startcol + 5] !== null) ? (int) $row[$startcol + 5] : null;
+			$this->custom_data = ($row[$startcol + 6] !== null) ? (string) $row[$startcol + 6] : null;
 			$this->resetModified();
 
 			$this->setNew(false);
@@ -454,7 +556,7 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 			}
 
 			// FIXME - using NUM_COLUMNS may be clearer.
-			return $startcol + 6; // 6 = MediaServerPeer::NUM_COLUMNS - MediaServerPeer::NUM_LAZY_LOAD_COLUMNS).
+			return $startcol + 7; // 7 = MediaServerPeer::NUM_COLUMNS - MediaServerPeer::NUM_LAZY_LOAD_COLUMNS).
 
 		} catch (Exception $e) {
 			throw new PropelException("Error populating MediaServer object", $e);
@@ -507,7 +609,9 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 		// already in the pool.
 
 		MediaServerPeer::setUseCriteriaFilter(false);
-		$stmt = MediaServerPeer::doSelectStmt($this->buildPkeyCriteria(), $con);
+		$criteria = $this->buildPkeyCriteria();
+		MediaServerPeer::addSelectColumns($criteria);
+		$stmt = BasePeer::doSelect($criteria, $con);
 		MediaServerPeer::setUseCriteriaFilter(true);
 		$row = $stmt->fetch(PDO::FETCH_NUM);
 		$stmt->closeCursor();
@@ -604,7 +708,7 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
                 KalturaLog::debug("was unable to save! retrying for the $retries time");
                 $criteria = $this->buildPkeyCriteria();
 				$criteria->addSelectColumn(MediaServerPeer::CUSTOM_DATA);
-                $stmt = MediaServerPeer::doSelectStmt($criteria, $con);
+                $stmt = BasePeer::doSelect($criteria, $con);
                 $cutsomDataArr = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 $newCustomData = $cutsomDataArr[0];
                 
@@ -614,22 +718,44 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 				$this->m_custom_data = myCustomData::fromString($newCustomData); 
 
 				//set custom data column values we wanted to change to
+				$validUpdate = true;
+				$atomicCustomDataFields = MediaServerPeer::getAtomicCustomDataFields();
 			 	foreach ($this->oldCustomDataValues as $namespace => $namespaceValues){
                 	foreach($namespaceValues as $name => $oldValue)
 					{
+						$newValue = null;
 						if ($namespace)
 						{
-							$newValue = $valuesToChangeTo[$namespace][$name];
+							if (isset ($valuesToChangeTo[$namespace][$name]))
+								$newValue = $valuesToChangeTo[$namespace][$name];
 						}
 						else
 						{ 
 							$newValue = $valuesToChangeTo[$name];
 						}
 					 
-						$this->putInCustomData($name, $newValue, $namespace);
+						if (!is_null($newValue)) {
+							$atomicField = false;
+							if($namespace) {
+								$atomicField = array_key_exists($namespace, $atomicCustomDataFields) && in_array($name, $atomicCustomDataFields[$namespace]);
+							} else {
+								$atomicField = in_array($name, $atomicCustomDataFields);
+							}
+							if($atomicField) {
+								$dbValue = $this->m_custom_data->get($name, $namespace);
+								if($oldValue != $dbValue) {
+									$validUpdate = false;
+									break;
+								}
+							}
+							$this->putInCustomData($name, $newValue, $namespace);
+						}
 					}
                    }
                    
+				if(!$validUpdate) 
+					break;
+					                   
 				$this->setCustomData($this->m_custom_data->toString());
 			}
 
@@ -722,7 +848,7 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	/**
 	 * Code to be run before persisting the object
 	 * @param PropelPDO $con
-	 * @return bloolean
+	 * @return boolean
 	 */
 	public function preSave(PropelPDO $con = null)
 	{
@@ -751,8 +877,7 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	 */
 	public function preInsert(PropelPDO $con = null)
 	{
-    	$this->setCreatedAt(time());
-    	
+		$this->setCreatedAt(time());
 		$this->setUpdatedAt(time());
 		return parent::preInsert($con);
 	}
@@ -787,7 +912,9 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 		if($this->isModified())
 		{
 			kQueryCache::invalidateQueryCache($this);
-			kEventsManager::raiseEvent(new kObjectChangedEvent($this, $this->tempModifiedColumns));
+			$modifiedColumns = $this->tempModifiedColumns;
+			$modifiedColumns[kObjectChangedEvent::CUSTOM_DATA_OLD_VALUES] = $this->oldCustomDataValues;
+			kEventsManager::raiseEvent(new kObjectChangedEvent($this, $modifiedColumns));
 		}
 			
 		$this->tempModifiedColumns = array();
@@ -799,7 +926,7 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	 * @var array
 	 */
 	private $tempModifiedColumns = array();
-		
+	
 	/**
 	 * Returns whether the object has been modified.
 	 *
@@ -955,12 +1082,15 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 				return $this->getUpdatedAt();
 				break;
 			case 3:
-				return $this->getHostname();
+				return $this->getHeartbeatTime();
 				break;
 			case 4:
-				return $this->getDc();
+				return $this->getHostname();
 				break;
 			case 5:
+				return $this->getDc();
+				break;
+			case 6:
 				return $this->getCustomData();
 				break;
 			default:
@@ -987,9 +1117,10 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 			$keys[0] => $this->getId(),
 			$keys[1] => $this->getCreatedAt(),
 			$keys[2] => $this->getUpdatedAt(),
-			$keys[3] => $this->getHostname(),
-			$keys[4] => $this->getDc(),
-			$keys[5] => $this->getCustomData(),
+			$keys[3] => $this->getHeartbeatTime(),
+			$keys[4] => $this->getHostname(),
+			$keys[5] => $this->getDc(),
+			$keys[6] => $this->getCustomData(),
 		);
 		return $result;
 	}
@@ -1031,12 +1162,15 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 				$this->setUpdatedAt($value);
 				break;
 			case 3:
-				$this->setHostname($value);
+				$this->setHeartbeatTime($value);
 				break;
 			case 4:
-				$this->setDc($value);
+				$this->setHostname($value);
 				break;
 			case 5:
+				$this->setDc($value);
+				break;
+			case 6:
 				$this->setCustomData($value);
 				break;
 		} // switch()
@@ -1066,9 +1200,10 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 		if (array_key_exists($keys[0], $arr)) $this->setId($arr[$keys[0]]);
 		if (array_key_exists($keys[1], $arr)) $this->setCreatedAt($arr[$keys[1]]);
 		if (array_key_exists($keys[2], $arr)) $this->setUpdatedAt($arr[$keys[2]]);
-		if (array_key_exists($keys[3], $arr)) $this->setHostname($arr[$keys[3]]);
-		if (array_key_exists($keys[4], $arr)) $this->setDc($arr[$keys[4]]);
-		if (array_key_exists($keys[5], $arr)) $this->setCustomData($arr[$keys[5]]);
+		if (array_key_exists($keys[3], $arr)) $this->setHeartbeatTime($arr[$keys[3]]);
+		if (array_key_exists($keys[4], $arr)) $this->setHostname($arr[$keys[4]]);
+		if (array_key_exists($keys[5], $arr)) $this->setDc($arr[$keys[5]]);
+		if (array_key_exists($keys[6], $arr)) $this->setCustomData($arr[$keys[6]]);
 	}
 
 	/**
@@ -1083,6 +1218,7 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 		if ($this->isColumnModified(MediaServerPeer::ID)) $criteria->add(MediaServerPeer::ID, $this->id);
 		if ($this->isColumnModified(MediaServerPeer::CREATED_AT)) $criteria->add(MediaServerPeer::CREATED_AT, $this->created_at);
 		if ($this->isColumnModified(MediaServerPeer::UPDATED_AT)) $criteria->add(MediaServerPeer::UPDATED_AT, $this->updated_at);
+		if ($this->isColumnModified(MediaServerPeer::HEARTBEAT_TIME)) $criteria->add(MediaServerPeer::HEARTBEAT_TIME, $this->heartbeat_time);
 		if ($this->isColumnModified(MediaServerPeer::HOSTNAME)) $criteria->add(MediaServerPeer::HOSTNAME, $this->hostname);
 		if ($this->isColumnModified(MediaServerPeer::DC)) $criteria->add(MediaServerPeer::DC, $this->dc);
 		if ($this->isColumnModified(MediaServerPeer::CUSTOM_DATA)) $criteria->add(MediaServerPeer::CUSTOM_DATA, $this->custom_data);
@@ -1167,6 +1303,8 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 		$copyObj->setCreatedAt($this->created_at);
 
 		$copyObj->setUpdatedAt($this->updated_at);
+
+		$copyObj->setHeartbeatTime($this->heartbeat_time);
 
 		$copyObj->setHostname($this->hostname);
 
@@ -1345,6 +1483,16 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	public function incInCustomData ( $name , $delta = 1, $namespace = null)
 	{
 		$customData = $this->getCustomDataObj( );
+		
+		$currentNamespace = '';
+		if($namespace)
+			$currentNamespace = $namespace;
+			
+		if(!isset($this->oldCustomDataValues[$currentNamespace]))
+			$this->oldCustomDataValues[$currentNamespace] = array();
+		if(!isset($this->oldCustomDataValues[$currentNamespace][$name]))
+			$this->oldCustomDataValues[$currentNamespace][$name] = $customData->get($name, $namespace);
+		
 		return $customData->inc ( $name , $delta , $namespace  );
 	}
 

@@ -26,7 +26,7 @@ abstract class BaseMediaServerPeer {
 	const TM_CLASS = 'MediaServerTableMap';
 	
 	/** The total number of columns. */
-	const NUM_COLUMNS = 6;
+	const NUM_COLUMNS = 7;
 
 	/** The number of lazy-loaded columns. */
 	const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -39,6 +39,9 @@ abstract class BaseMediaServerPeer {
 
 	/** the column name for the UPDATED_AT field */
 	const UPDATED_AT = 'media_server.UPDATED_AT';
+
+	/** the column name for the HEARTBEAT_TIME field */
+	const HEARTBEAT_TIME = 'media_server.HEARTBEAT_TIME';
 
 	/** the column name for the HOSTNAME field */
 	const HOSTNAME = 'media_server.HOSTNAME';
@@ -65,11 +68,11 @@ abstract class BaseMediaServerPeer {
 	 * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
 	 */
 	private static $fieldNames = array (
-		BasePeer::TYPE_PHPNAME => array ('Id', 'CreatedAt', 'UpdatedAt', 'Hostname', 'Dc', 'CustomData', ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'createdAt', 'updatedAt', 'hostname', 'dc', 'customData', ),
-		BasePeer::TYPE_COLNAME => array (self::ID, self::CREATED_AT, self::UPDATED_AT, self::HOSTNAME, self::DC, self::CUSTOM_DATA, ),
-		BasePeer::TYPE_FIELDNAME => array ('id', 'created_at', 'updated_at', 'hostname', 'dc', 'custom_data', ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
+		BasePeer::TYPE_PHPNAME => array ('Id', 'CreatedAt', 'UpdatedAt', 'HeartbeatTime', 'Hostname', 'Dc', 'CustomData', ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'createdAt', 'updatedAt', 'heartbeatTime', 'hostname', 'dc', 'customData', ),
+		BasePeer::TYPE_COLNAME => array (self::ID, self::CREATED_AT, self::UPDATED_AT, self::HEARTBEAT_TIME, self::HOSTNAME, self::DC, self::CUSTOM_DATA, ),
+		BasePeer::TYPE_FIELDNAME => array ('id', 'created_at', 'updated_at', 'heartbeat_time', 'hostname', 'dc', 'custom_data', ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
 	);
 
 	/**
@@ -79,11 +82,11 @@ abstract class BaseMediaServerPeer {
 	 * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
 	 */
 	private static $fieldKeys = array (
-		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'CreatedAt' => 1, 'UpdatedAt' => 2, 'Hostname' => 3, 'Dc' => 4, 'CustomData' => 5, ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'createdAt' => 1, 'updatedAt' => 2, 'hostname' => 3, 'dc' => 4, 'customData' => 5, ),
-		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::CREATED_AT => 1, self::UPDATED_AT => 2, self::HOSTNAME => 3, self::DC => 4, self::CUSTOM_DATA => 5, ),
-		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'created_at' => 1, 'updated_at' => 2, 'hostname' => 3, 'dc' => 4, 'custom_data' => 5, ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
+		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'CreatedAt' => 1, 'UpdatedAt' => 2, 'HeartbeatTime' => 3, 'Hostname' => 4, 'Dc' => 5, 'CustomData' => 6, ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'createdAt' => 1, 'updatedAt' => 2, 'heartbeatTime' => 3, 'hostname' => 4, 'dc' => 5, 'customData' => 6, ),
+		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::CREATED_AT => 1, self::UPDATED_AT => 2, self::HEARTBEAT_TIME => 3, self::HOSTNAME => 4, self::DC => 5, self::CUSTOM_DATA => 6, ),
+		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'created_at' => 1, 'updated_at' => 2, 'heartbeat_time' => 3, 'hostname' => 4, 'dc' => 5, 'custom_data' => 6, ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
 	);
 
 	/**
@@ -156,6 +159,7 @@ abstract class BaseMediaServerPeer {
 		$criteria->addSelectColumn(MediaServerPeer::ID);
 		$criteria->addSelectColumn(MediaServerPeer::CREATED_AT);
 		$criteria->addSelectColumn(MediaServerPeer::UPDATED_AT);
+		$criteria->addSelectColumn(MediaServerPeer::HEARTBEAT_TIME);
 		$criteria->addSelectColumn(MediaServerPeer::HOSTNAME);
 		$criteria->addSelectColumn(MediaServerPeer::DC);
 		$criteria->addSelectColumn(MediaServerPeer::CUSTOM_DATA);
@@ -291,7 +295,7 @@ abstract class BaseMediaServerPeer {
 			}
 		}
 	}
-	
+						
 	/**
 	 * Adds the supplied object array to the instance pool.
 	 *  
@@ -788,6 +792,15 @@ abstract class BaseMediaServerPeer {
 	 * @return array
 	 */
 	public static function getAtomicColumns()
+	{
+		return array();
+	}
+	
+	/**
+	 * Return array of custom-data fields that shouldn't be auto-updated.
+	 * @return array
+	 */
+	public static function getAtomicCustomDataFields()
 	{
 		return array();
 	}
