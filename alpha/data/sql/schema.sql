@@ -295,6 +295,7 @@ DROP TABLE IF EXISTS `media_server`;
 CREATE TABLE `media_server`
 (
 	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`partner_id` INTEGER,
 	`created_at` DATETIME,
 	`updated_at` DATETIME,
 	`heartbeat_time` DATETIME,

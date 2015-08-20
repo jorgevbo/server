@@ -26,13 +26,16 @@ abstract class BaseMediaServerPeer {
 	const TM_CLASS = 'MediaServerTableMap';
 	
 	/** The total number of columns. */
-	const NUM_COLUMNS = 7;
+	const NUM_COLUMNS = 8;
 
 	/** The number of lazy-loaded columns. */
 	const NUM_LAZY_LOAD_COLUMNS = 0;
 
 	/** the column name for the ID field */
 	const ID = 'media_server.ID';
+
+	/** the column name for the PARTNER_ID field */
+	const PARTNER_ID = 'media_server.PARTNER_ID';
 
 	/** the column name for the CREATED_AT field */
 	const CREATED_AT = 'media_server.CREATED_AT';
@@ -68,11 +71,11 @@ abstract class BaseMediaServerPeer {
 	 * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
 	 */
 	private static $fieldNames = array (
-		BasePeer::TYPE_PHPNAME => array ('Id', 'CreatedAt', 'UpdatedAt', 'HeartbeatTime', 'Hostname', 'Dc', 'CustomData', ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'createdAt', 'updatedAt', 'heartbeatTime', 'hostname', 'dc', 'customData', ),
-		BasePeer::TYPE_COLNAME => array (self::ID, self::CREATED_AT, self::UPDATED_AT, self::HEARTBEAT_TIME, self::HOSTNAME, self::DC, self::CUSTOM_DATA, ),
-		BasePeer::TYPE_FIELDNAME => array ('id', 'created_at', 'updated_at', 'heartbeat_time', 'hostname', 'dc', 'custom_data', ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
+		BasePeer::TYPE_PHPNAME => array ('Id', 'PartnerId', 'CreatedAt', 'UpdatedAt', 'HeartbeatTime', 'Hostname', 'Dc', 'CustomData', ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'partnerId', 'createdAt', 'updatedAt', 'heartbeatTime', 'hostname', 'dc', 'customData', ),
+		BasePeer::TYPE_COLNAME => array (self::ID, self::PARTNER_ID, self::CREATED_AT, self::UPDATED_AT, self::HEARTBEAT_TIME, self::HOSTNAME, self::DC, self::CUSTOM_DATA, ),
+		BasePeer::TYPE_FIELDNAME => array ('id', 'partner_id', 'created_at', 'updated_at', 'heartbeat_time', 'hostname', 'dc', 'custom_data', ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, )
 	);
 
 	/**
@@ -82,11 +85,11 @@ abstract class BaseMediaServerPeer {
 	 * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
 	 */
 	private static $fieldKeys = array (
-		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'CreatedAt' => 1, 'UpdatedAt' => 2, 'HeartbeatTime' => 3, 'Hostname' => 4, 'Dc' => 5, 'CustomData' => 6, ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'createdAt' => 1, 'updatedAt' => 2, 'heartbeatTime' => 3, 'hostname' => 4, 'dc' => 5, 'customData' => 6, ),
-		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::CREATED_AT => 1, self::UPDATED_AT => 2, self::HEARTBEAT_TIME => 3, self::HOSTNAME => 4, self::DC => 5, self::CUSTOM_DATA => 6, ),
-		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'created_at' => 1, 'updated_at' => 2, 'heartbeat_time' => 3, 'hostname' => 4, 'dc' => 5, 'custom_data' => 6, ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
+		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'PartnerId' => 1, 'CreatedAt' => 2, 'UpdatedAt' => 3, 'HeartbeatTime' => 4, 'Hostname' => 5, 'Dc' => 6, 'CustomData' => 7, ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'partnerId' => 1, 'createdAt' => 2, 'updatedAt' => 3, 'heartbeatTime' => 4, 'hostname' => 5, 'dc' => 6, 'customData' => 7, ),
+		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::PARTNER_ID => 1, self::CREATED_AT => 2, self::UPDATED_AT => 3, self::HEARTBEAT_TIME => 4, self::HOSTNAME => 5, self::DC => 6, self::CUSTOM_DATA => 7, ),
+		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'partner_id' => 1, 'created_at' => 2, 'updated_at' => 3, 'heartbeat_time' => 4, 'hostname' => 5, 'dc' => 6, 'custom_data' => 7, ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, )
 	);
 
 	/**
@@ -157,6 +160,7 @@ abstract class BaseMediaServerPeer {
 	public static function addSelectColumns(Criteria $criteria)
 	{
 		$criteria->addSelectColumn(MediaServerPeer::ID);
+		$criteria->addSelectColumn(MediaServerPeer::PARTNER_ID);
 		$criteria->addSelectColumn(MediaServerPeer::CREATED_AT);
 		$criteria->addSelectColumn(MediaServerPeer::UPDATED_AT);
 		$criteria->addSelectColumn(MediaServerPeer::HEARTBEAT_TIME);
@@ -446,6 +450,65 @@ abstract class BaseMediaServerPeer {
 	
 	public static function addPartnerToCriteria($partnerId, $privatePartnerData = false, $partnerGroup = null, $kalturaNetwork = null)
 	{
+		$criteriaFilter = self::getCriteriaFilter();
+		$criteria = $criteriaFilter->getFilter();
+		
+		if(!$privatePartnerData)
+		{
+			// the private partner data is not allowed - 
+			if($kalturaNetwork)
+			{
+				// allow only the kaltura netword stuff
+				if($partnerId)
+				{
+					$orderBy = "(" . self::PARTNER_ID . "<>{$partnerId})";  // first take the pattner_id and then the rest
+					myCriteria::addComment($criteria , "Only Kaltura Network");
+					$criteria->addAscendingOrderByColumn($orderBy);//, Criteria::CUSTOM );
+				}
+			}
+			else
+			{
+				// no private data and no kaltura_network - 
+				// add a criteria that will return nothing
+				$criteria->addAnd(self::PARTNER_ID, Partner::PARTNER_THAT_DOWS_NOT_EXIST);
+			}
+		}
+		else
+		{
+			// private data is allowed
+			if(!strlen(strval($partnerGroup)))
+			{
+				// the default case
+				$criteria->addAnd(self::PARTNER_ID, $partnerId);
+			}
+			elseif ($partnerGroup == myPartnerUtils::ALL_PARTNERS_WILD_CHAR)
+			{
+				// all is allowed - don't add anything to the criteria
+			}
+			else 
+			{
+				// $partnerGroup hold a list of partners separated by ',' or $kalturaNetwork is not empty (should be mySearchUtils::KALTURA_NETWORK = 'kn')
+				$partners = explode(',', trim($partnerGroup));
+				foreach($partners as &$p)
+					trim($p); // make sure there are not leading or trailing spaces
+
+				// add the partner_id to the partner_group
+				if (!in_array(strval($partnerId), $partners))
+					$partners[] = strval($partnerId);
+				
+				if(count($partners) == 1 && reset($partners) == $partnerId)
+				{
+					$criteria->addAnd(self::PARTNER_ID, $partnerId);
+				}
+				else 
+				{
+					$criterion = $criteria->getNewCriterion(self::PARTNER_ID, $partners, Criteria::IN);
+					$criteria->addAnd($criterion);
+				}
+			}
+		}
+			
+		$criteriaFilter->enable();
 	}
 	
 	/**
