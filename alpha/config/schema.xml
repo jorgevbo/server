@@ -329,6 +329,7 @@
 		<column primaryKey="false" required="false" autoIncrement="false" lazyLoad="false" name="heartbeat_time" type="timestamp" />
 		<column primaryKey="false" required="false" autoIncrement="false" lazyLoad="false" name="hostname" type="varchar" size="255" />
 		<column primaryKey="false" required="false" autoIncrement="false" lazyLoad="false" name="dc" type="integer" />
+		<column primaryKey="false" required="false" autoIncrement="false" lazyLoad="false" name="status" type="integer" />
 		<column primaryKey="false" required="false" autoIncrement="false" lazyLoad="false" name="custom_data" type="longvarchar" />
 	</table>
 	<table skipSql="false" abstract="false" name="kvote" phpName="kvote">

@@ -26,7 +26,7 @@ abstract class BaseMediaServerPeer {
 	const TM_CLASS = 'MediaServerTableMap';
 	
 	/** The total number of columns. */
-	const NUM_COLUMNS = 8;
+	const NUM_COLUMNS = 9;
 
 	/** The number of lazy-loaded columns. */
 	const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -52,6 +52,9 @@ abstract class BaseMediaServerPeer {
 	/** the column name for the DC field */
 	const DC = 'media_server.DC';
 
+	/** the column name for the STATUS field */
+	const STATUS = 'media_server.STATUS';
+
 	/** the column name for the CUSTOM_DATA field */
 	const CUSTOM_DATA = 'media_server.CUSTOM_DATA';
 
@@ -71,11 +74,11 @@ abstract class BaseMediaServerPeer {
 	 * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
 	 */
 	private static $fieldNames = array (
-		BasePeer::TYPE_PHPNAME => array ('Id', 'PartnerId', 'CreatedAt', 'UpdatedAt', 'HeartbeatTime', 'Hostname', 'Dc', 'CustomData', ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'partnerId', 'createdAt', 'updatedAt', 'heartbeatTime', 'hostname', 'dc', 'customData', ),
-		BasePeer::TYPE_COLNAME => array (self::ID, self::PARTNER_ID, self::CREATED_AT, self::UPDATED_AT, self::HEARTBEAT_TIME, self::HOSTNAME, self::DC, self::CUSTOM_DATA, ),
-		BasePeer::TYPE_FIELDNAME => array ('id', 'partner_id', 'created_at', 'updated_at', 'heartbeat_time', 'hostname', 'dc', 'custom_data', ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, )
+		BasePeer::TYPE_PHPNAME => array ('Id', 'PartnerId', 'CreatedAt', 'UpdatedAt', 'HeartbeatTime', 'Hostname', 'Dc', 'Status', 'CustomData', ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'partnerId', 'createdAt', 'updatedAt', 'heartbeatTime', 'hostname', 'dc', 'status', 'customData', ),
+		BasePeer::TYPE_COLNAME => array (self::ID, self::PARTNER_ID, self::CREATED_AT, self::UPDATED_AT, self::HEARTBEAT_TIME, self::HOSTNAME, self::DC, self::STATUS, self::CUSTOM_DATA, ),
+		BasePeer::TYPE_FIELDNAME => array ('id', 'partner_id', 'created_at', 'updated_at', 'heartbeat_time', 'hostname', 'dc', 'status', 'custom_data', ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, )
 	);
 
 	/**
@@ -85,11 +88,11 @@ abstract class BaseMediaServerPeer {
 	 * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
 	 */
 	private static $fieldKeys = array (
-		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'PartnerId' => 1, 'CreatedAt' => 2, 'UpdatedAt' => 3, 'HeartbeatTime' => 4, 'Hostname' => 5, 'Dc' => 6, 'CustomData' => 7, ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'partnerId' => 1, 'createdAt' => 2, 'updatedAt' => 3, 'heartbeatTime' => 4, 'hostname' => 5, 'dc' => 6, 'customData' => 7, ),
-		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::PARTNER_ID => 1, self::CREATED_AT => 2, self::UPDATED_AT => 3, self::HEARTBEAT_TIME => 4, self::HOSTNAME => 5, self::DC => 6, self::CUSTOM_DATA => 7, ),
-		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'partner_id' => 1, 'created_at' => 2, 'updated_at' => 3, 'heartbeat_time' => 4, 'hostname' => 5, 'dc' => 6, 'custom_data' => 7, ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, )
+		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'PartnerId' => 1, 'CreatedAt' => 2, 'UpdatedAt' => 3, 'HeartbeatTime' => 4, 'Hostname' => 5, 'Dc' => 6, 'Status' => 7, 'CustomData' => 8, ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'partnerId' => 1, 'createdAt' => 2, 'updatedAt' => 3, 'heartbeatTime' => 4, 'hostname' => 5, 'dc' => 6, 'status' => 7, 'customData' => 8, ),
+		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::PARTNER_ID => 1, self::CREATED_AT => 2, self::UPDATED_AT => 3, self::HEARTBEAT_TIME => 4, self::HOSTNAME => 5, self::DC => 6, self::STATUS => 7, self::CUSTOM_DATA => 8, ),
+		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'partner_id' => 1, 'created_at' => 2, 'updated_at' => 3, 'heartbeat_time' => 4, 'hostname' => 5, 'dc' => 6, 'status' => 7, 'custom_data' => 8, ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, )
 	);
 
 	/**
@@ -166,6 +169,7 @@ abstract class BaseMediaServerPeer {
 		$criteria->addSelectColumn(MediaServerPeer::HEARTBEAT_TIME);
 		$criteria->addSelectColumn(MediaServerPeer::HOSTNAME);
 		$criteria->addSelectColumn(MediaServerPeer::DC);
+		$criteria->addSelectColumn(MediaServerPeer::STATUS);
 		$criteria->addSelectColumn(MediaServerPeer::CUSTOM_DATA);
 	}
 

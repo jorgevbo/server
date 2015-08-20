@@ -62,6 +62,12 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	protected $dc;
 
 	/**
+	 * The value for the status field.
+	 * @var        int
+	 */
+	protected $status;
+
+	/**
 	 * The value for the custom_data field.
 	 * @var        string
 	 */
@@ -270,6 +276,16 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	public function getDc()
 	{
 		return $this->dc;
+	}
+
+	/**
+	 * Get the [status] column value.
+	 * 
+	 * @return     int
+	 */
+	public function getStatus()
+	{
+		return $this->status;
 	}
 
 	/**
@@ -525,6 +541,29 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 	} // setDc()
 
 	/**
+	 * Set the value of [status] column.
+	 * 
+	 * @param      int $v new value
+	 * @return     MediaServer The current object (for fluent API support)
+	 */
+	public function setStatus($v)
+	{
+		if(!isset($this->oldColumnsValues[MediaServerPeer::STATUS]))
+			$this->oldColumnsValues[MediaServerPeer::STATUS] = $this->status;
+
+		if ($v !== null) {
+			$v = (int) $v;
+		}
+
+		if ($this->status !== $v) {
+			$this->status = $v;
+			$this->modifiedColumns[] = MediaServerPeer::STATUS;
+		}
+
+		return $this;
+	} // setStatus()
+
+	/**
 	 * Set the value of [custom_data] column.
 	 * 
 	 * @param      string $v new value
@@ -586,7 +625,8 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 			$this->heartbeat_time = ($row[$startcol + 4] !== null) ? (string) $row[$startcol + 4] : null;
 			$this->hostname = ($row[$startcol + 5] !== null) ? (string) $row[$startcol + 5] : null;
 			$this->dc = ($row[$startcol + 6] !== null) ? (int) $row[$startcol + 6] : null;
-			$this->custom_data = ($row[$startcol + 7] !== null) ? (string) $row[$startcol + 7] : null;
+			$this->status = ($row[$startcol + 7] !== null) ? (int) $row[$startcol + 7] : null;
+			$this->custom_data = ($row[$startcol + 8] !== null) ? (string) $row[$startcol + 8] : null;
 			$this->resetModified();
 
 			$this->setNew(false);
@@ -596,7 +636,7 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 			}
 
 			// FIXME - using NUM_COLUMNS may be clearer.
-			return $startcol + 8; // 8 = MediaServerPeer::NUM_COLUMNS - MediaServerPeer::NUM_LAZY_LOAD_COLUMNS).
+			return $startcol + 9; // 9 = MediaServerPeer::NUM_COLUMNS - MediaServerPeer::NUM_LAZY_LOAD_COLUMNS).
 
 		} catch (Exception $e) {
 			throw new PropelException("Error populating MediaServer object", $e);
@@ -1134,6 +1174,9 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 				return $this->getDc();
 				break;
 			case 7:
+				return $this->getStatus();
+				break;
+			case 8:
 				return $this->getCustomData();
 				break;
 			default:
@@ -1164,7 +1207,8 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 			$keys[4] => $this->getHeartbeatTime(),
 			$keys[5] => $this->getHostname(),
 			$keys[6] => $this->getDc(),
-			$keys[7] => $this->getCustomData(),
+			$keys[7] => $this->getStatus(),
+			$keys[8] => $this->getCustomData(),
 		);
 		return $result;
 	}
@@ -1218,6 +1262,9 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 				$this->setDc($value);
 				break;
 			case 7:
+				$this->setStatus($value);
+				break;
+			case 8:
 				$this->setCustomData($value);
 				break;
 		} // switch()
@@ -1251,7 +1298,8 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 		if (array_key_exists($keys[4], $arr)) $this->setHeartbeatTime($arr[$keys[4]]);
 		if (array_key_exists($keys[5], $arr)) $this->setHostname($arr[$keys[5]]);
 		if (array_key_exists($keys[6], $arr)) $this->setDc($arr[$keys[6]]);
-		if (array_key_exists($keys[7], $arr)) $this->setCustomData($arr[$keys[7]]);
+		if (array_key_exists($keys[7], $arr)) $this->setStatus($arr[$keys[7]]);
+		if (array_key_exists($keys[8], $arr)) $this->setCustomData($arr[$keys[8]]);
 	}
 
 	/**
@@ -1270,6 +1318,7 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 		if ($this->isColumnModified(MediaServerPeer::HEARTBEAT_TIME)) $criteria->add(MediaServerPeer::HEARTBEAT_TIME, $this->heartbeat_time);
 		if ($this->isColumnModified(MediaServerPeer::HOSTNAME)) $criteria->add(MediaServerPeer::HOSTNAME, $this->hostname);
 		if ($this->isColumnModified(MediaServerPeer::DC)) $criteria->add(MediaServerPeer::DC, $this->dc);
+		if ($this->isColumnModified(MediaServerPeer::STATUS)) $criteria->add(MediaServerPeer::STATUS, $this->status);
 		if ($this->isColumnModified(MediaServerPeer::CUSTOM_DATA)) $criteria->add(MediaServerPeer::CUSTOM_DATA, $this->custom_data);
 
 		return $criteria;
@@ -1360,6 +1409,8 @@ abstract class BaseMediaServer extends BaseObject  implements Persistent {
 		$copyObj->setHostname($this->hostname);
 
 		$copyObj->setDc($this->dc);
+
+		$copyObj->setStatus($this->status);
 
 		$copyObj->setCustomData($this->custom_data);
 

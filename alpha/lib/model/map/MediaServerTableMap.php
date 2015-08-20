@@ -44,6 +44,7 @@ class MediaServerTableMap extends TableMap {
 		$this->addColumn('HEARTBEAT_TIME', 'HeartbeatTime', 'TIMESTAMP', false, null, null);
 		$this->addColumn('HOSTNAME', 'Hostname', 'VARCHAR', false, 255, null);
 		$this->addColumn('DC', 'Dc', 'INTEGER', false, null, null);
+		$this->addColumn('STATUS', 'Status', 'INTEGER', false, null, null);
 		$this->addColumn('CUSTOM_DATA', 'CustomData', 'LONGVARCHAR', false, null, null);
 		// validators
 	} // initialize()

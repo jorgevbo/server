@@ -301,6 +301,7 @@ CREATE TABLE `media_server`
 	`heartbeat_time` DATETIME,
 	`hostname` VARCHAR(255),
 	`dc` INTEGER,
+	`status` INTEGER,
 	`custom_data` TEXT,
 	PRIMARY KEY (`id`)
 )Type=InnoDB;
