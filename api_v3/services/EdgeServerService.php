@@ -127,4 +127,26 @@ class EdgeServerService extends KalturaBaseService
 		$response->objects = KalturaEdgeServerArray::fromDbArray($list, $this->getResponseProfile());
 		return $response;
 	}
+
+	/**
+	 * Report edge server status
+	 *
+	 * @action reportStatus
+	 * @param string $hostName
+	 * @param KalturaMediaServerStatus $mediaServerStatus
+	 * @return KalturaEdgeServer
+	 */
+	function reportStatusAction($hostName, KalturaMediaServerStatus $mediaServerStatus)
+	{
+		$dbEdgeServer = EdgeServerPeer::retrieveByPartnerIdAndHostName($this->getPartnerId(), $hostName);
+		if (!$dbEdgeServer)
+			throw new KalturaAPIException(KalturaErrors::EDGE_SERVER_NOT_FOUND, $hostname);
+		
+		$dbEdgeServer->setHeartbeatTime(time());
+		$dbEdgeServer->save();
+	
+		$edgeServer = new KalturaEdgeServer();
+		$edgeServer->fromObject($dbEdgeServer, $this->getResponseProfile());
+		return $edgeServer;
+	}
 }
