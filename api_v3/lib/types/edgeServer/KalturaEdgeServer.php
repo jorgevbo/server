@@ -27,6 +27,13 @@ class KalturaEdgeServer extends KalturaObject implements IFilterable
 	public $updatedAt;
 	
 	/**
+	 * @var time
+	 * @readonly
+	 * @filter gte,lte,order
+	 */
+	public $heartbeatTime;
+	
+	/**
 	 * @var int
 	 * @readonly
 	 */
@@ -104,6 +111,7 @@ class KalturaEdgeServer extends KalturaObject implements IFilterable
 		"id",
 		"createdAt",
 		"updatedAt",
+		"heartbeatTime",
 		"partnerId",
 		"name",
 		"systemName",
