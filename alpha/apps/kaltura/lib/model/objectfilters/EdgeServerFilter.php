@@ -16,6 +16,8 @@ class EdgeServerFilter extends baseObjectFilter
 			"_lte_created_at",
 			"_gte_updated_at",
 			"_lte_updated_at",
+			"_gte_heartbeat_time",
+			"_lte_heartbeat_time",
 			"_eq_partner_id",
 			"_in_partner_id",
 			"_eq_system_name",
@@ -38,6 +40,7 @@ class EdgeServerFilter extends baseObjectFilter
 		$this->allowed_order_fields = array ( 
 			"created_at",
 			"updated_at",
+			"heartbeat_time",
 		);
 			
 	}
