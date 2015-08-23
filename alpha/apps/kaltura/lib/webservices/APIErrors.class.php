@@ -417,4 +417,6 @@ class APIErrors
 	const UNKNOWN_RESPONSE_FORMAT = "UNKNOWN_RESPONSE_FORMAT;FORMAT;Response format provided [@FORMAT@] is not recognized by server";
 	
 	const PROFILE_STATUS_DISABLED = "PROFILE_STATUS_DISABLED;PROFILE_ID;Export action failed since profile [@PROFILE_ID@] is disabled";
+	
+	const EDGE_SERVER_NOT_FOUND = "EDGE_SERVER_NOT_FOUND;EGDE_SERVER_HOST_NAEM;Edge server with host name \"@EGDE_SERVER_HOST_NAEM@\" not found";
 }

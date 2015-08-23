@@ -27,6 +27,15 @@ class KalturaEdgeServer extends KalturaObject implements IFilterable
 	public $updatedAt;
 	
 	/**
+	 * Server last update date as Unix timestamp (In seconds)
+	 *
+	 * @var int
+	 * @filter gte,lte,order
+	 * @readonly
+	 */
+	public $heartbeatTime;
+	
+	/**
 	 * @var int
 	 * @readonly
 	 */
@@ -104,6 +113,7 @@ class KalturaEdgeServer extends KalturaObject implements IFilterable
 		"id",
 		"createdAt",
 		"updatedAt",
+		"heartbeatTime",
 		"partnerId",
 		"name",
 		"systemName",
