@@ -9,4 +9,6 @@ class KalturaEdgeServerOrderBy extends KalturaStringEnum
 	const CREATED_AT_DESC = "-createdAt";
 	const UPDATED_AT_ASC = "+updatedAt";
 	const UPDATED_AT_DESC = "-updatedAt";
+	const HEARTBEAT_TIME_ASC = "+heartbeatTime";
+	const HEARTBEAT_TIME_DESC = "-heartbeatTime";
 }

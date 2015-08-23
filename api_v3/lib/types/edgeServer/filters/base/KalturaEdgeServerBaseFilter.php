@@ -14,6 +14,8 @@ abstract class KalturaEdgeServerBaseFilter extends KalturaFilter
 		"createdAtLessThanOrEqual" => "_lte_created_at",
 		"updatedAtGreaterThanOrEqual" => "_gte_updated_at",
 		"updatedAtLessThanOrEqual" => "_lte_updated_at",
+		"heartbeatTimeGreaterThanOrEqual" => "_gte_heartbeat_time",
+		"heartbeatTimeLessThanOrEqual" => "_lte_heartbeat_time",
 		"nameEqual" => "_eq_name",
 		"nameIn" => "_in_name",
 		"systemNameEqual" => "_eq_system_name",
@@ -39,6 +41,8 @@ abstract class KalturaEdgeServerBaseFilter extends KalturaFilter
 		"-createdAt" => "-created_at",
 		"+updatedAt" => "+updated_at",
 		"-updatedAt" => "-updated_at",
+		"+heartbeatTime" => "+heartbeat_time",
+		"-heartbeatTime" => "-heartbeat_time",
 	);
 
 	public function getMapBetweenObjects()
@@ -80,6 +84,16 @@ abstract class KalturaEdgeServerBaseFilter extends KalturaFilter
 	 * @var time
 	 */
 	public $updatedAtLessThanOrEqual;
+
+	/**
+	 * @var time
+	 */
+	public $heartbeatTimeGreaterThanOrEqual;
+
+	/**
+	 * @var time
+	 */
+	public $heartbeatTimeLessThanOrEqual;
 
 	/**
 	 * @var string
