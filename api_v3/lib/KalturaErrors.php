@@ -608,4 +608,6 @@ class KalturaErrors extends APIErrors
 	 * Edge Server service
 	 */
 	const HOST_NAME_ALREADY_EXISTS = "HOST_NAME_ALREADY_EXISTS;HOST_NAME;Host Name [@HOST_NAME@] already exists";
+	
+	const EDGE_SERVER_NOT_FOUND = "EDGE_SERVER_NOT_FOUND;EGDE_SERVER_HOST_NAEM;Edge server with host name \"@EGDE_SERVER_HOST_NAEM@\" not found";
 }
