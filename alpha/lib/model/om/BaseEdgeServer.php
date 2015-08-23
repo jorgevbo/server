@@ -38,6 +38,12 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 	protected $updated_at;
 
 	/**
+	 * The value for the heartbeat_time field.
+	 * @var        string
+	 */
+	protected $heartbeat_time;
+
+	/**
 	 * The value for the partner_id field.
 	 * @var        int
 	 */
@@ -249,6 +255,46 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 				$dt = new DateTime($this->updated_at);
 			} catch (Exception $x) {
 				throw new PropelException("Internally stored date/time/timestamp value could not be converted to DateTime: " . var_export($this->updated_at, true), $x);
+			}
+		}
+
+		if ($format === null) {
+			// We cast here to maintain BC in API; obviously we will lose data if we're dealing with pre-/post-epoch dates.
+			return (int) $dt->format('U');
+		} elseif (strpos($format, '%') !== false) {
+			return strftime($format, $dt->format('U'));
+		} else {
+			return $dt->format($format);
+		}
+	}
+
+	/**
+	 * Get the [optionally formatted] temporal [heartbeat_time] column value.
+	 * 
+	 * This accessor only only work with unix epoch dates.  Consider enabling the propel.useDateTimeClass
+	 * option in order to avoid converstions to integers (which are limited in the dates they can express).
+	 *
+	 * @param      string $format The date/time format string (either date()-style or strftime()-style).
+	 *							If format is NULL, then the raw unix timestamp integer will be returned.
+	 * @return     mixed Formatted date/time value as string or (integer) unix timestamp (if format is NULL), NULL if column is NULL, and 0 if column value is 0000-00-00 00:00:00
+	 * @throws     PropelException - if unable to parse/validate the date/time value.
+	 */
+	public function getHeartbeatTime($format = 'Y-m-d H:i:s')
+	{
+		if ($this->heartbeat_time === null) {
+			return null;
+		}
+
+
+		if ($this->heartbeat_time === '0000-00-00 00:00:00') {
+			// while technically this is not a default value of NULL,
+			// this seems to be closest in meaning.
+			return null;
+		} else {
+			try {
+				$dt = new DateTime($this->heartbeat_time);
+			} catch (Exception $x) {
+				throw new PropelException("Internally stored date/time/timestamp value could not be converted to DateTime: " . var_export($this->heartbeat_time, true), $x);
 			}
 		}
 
@@ -492,6 +538,58 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 
 		return $this;
 	} // setUpdatedAt()
+
+	/**
+	 * Sets the value of [heartbeat_time] column to a normalized version of the date/time value specified.
+	 * 
+	 * @param      mixed $v string, integer (timestamp), or DateTime value.  Empty string will
+	 *						be treated as NULL for temporal objects.
+	 * @return     EdgeServer The current object (for fluent API support)
+	 */
+	public function setHeartbeatTime($v)
+	{
+		if(!isset($this->oldColumnsValues[EdgeServerPeer::HEARTBEAT_TIME]))
+			$this->oldColumnsValues[EdgeServerPeer::HEARTBEAT_TIME] = $this->heartbeat_time;
+
+		// we treat '' as NULL for temporal objects because DateTime('') == DateTime('now')
+		// -- which is unexpected, to say the least.
+		if ($v === null || $v === '') {
+			$dt = null;
+		} elseif ($v instanceof DateTime) {
+			$dt = $v;
+		} else {
+			// some string/numeric value passed; we normalize that so that we can
+			// validate it.
+			try {
+				if (is_numeric($v)) { // if it's a unix timestamp
+					$dt = new DateTime('@'.$v, new DateTimeZone('UTC'));
+					// We have to explicitly specify and then change the time zone because of a
+					// DateTime bug: http://bugs.php.net/bug.php?id=43003
+					$dt->setTimeZone(new DateTimeZone(date_default_timezone_get()));
+				} else {
+					$dt = new DateTime($v);
+				}
+			} catch (Exception $x) {
+				throw new PropelException('Error parsing date/time value: ' . var_export($v, true), $x);
+			}
+		}
+
+		if ( $this->heartbeat_time !== null || $dt !== null ) {
+			// (nested ifs are a little easier to read in this case)
+
+			$currNorm = ($this->heartbeat_time !== null && $tmpDt = new DateTime($this->heartbeat_time)) ? $tmpDt->format('Y-m-d H:i:s') : null;
+			$newNorm = ($dt !== null) ? $dt->format('Y-m-d H:i:s') : null;
+
+			if ( ($currNorm !== $newNorm) // normalized values don't match 
+					)
+			{
+				$this->heartbeat_time = ($dt ? $dt->format('Y-m-d H:i:s') : null);
+				$this->modifiedColumns[] = EdgeServerPeer::HEARTBEAT_TIME;
+			}
+		} // if either are not null
+
+		return $this;
+	} // setHeartbeatTime()
 
 	/**
 	 * Set the value of [partner_id] column.
@@ -789,17 +887,18 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 			$this->id = ($row[$startcol + 0] !== null) ? (int) $row[$startcol + 0] : null;
 			$this->created_at = ($row[$startcol + 1] !== null) ? (string) $row[$startcol + 1] : null;
 			$this->updated_at = ($row[$startcol + 2] !== null) ? (string) $row[$startcol + 2] : null;
-			$this->partner_id = ($row[$startcol + 3] !== null) ? (int) $row[$startcol + 3] : null;
-			$this->name = ($row[$startcol + 4] !== null) ? (string) $row[$startcol + 4] : null;
-			$this->system_name = ($row[$startcol + 5] !== null) ? (string) $row[$startcol + 5] : null;
-			$this->description = ($row[$startcol + 6] !== null) ? (string) $row[$startcol + 6] : null;
-			$this->status = ($row[$startcol + 7] !== null) ? (int) $row[$startcol + 7] : null;
-			$this->type = ($row[$startcol + 8] !== null) ? (int) $row[$startcol + 8] : null;
-			$this->tags = ($row[$startcol + 9] !== null) ? (string) $row[$startcol + 9] : null;
-			$this->host_name = ($row[$startcol + 10] !== null) ? (string) $row[$startcol + 10] : null;
-			$this->playback_host_name = ($row[$startcol + 11] !== null) ? (string) $row[$startcol + 11] : null;
-			$this->parent_id = ($row[$startcol + 12] !== null) ? (int) $row[$startcol + 12] : null;
-			$this->custom_data = ($row[$startcol + 13] !== null) ? (string) $row[$startcol + 13] : null;
+			$this->heartbeat_time = ($row[$startcol + 3] !== null) ? (string) $row[$startcol + 3] : null;
+			$this->partner_id = ($row[$startcol + 4] !== null) ? (int) $row[$startcol + 4] : null;
+			$this->name = ($row[$startcol + 5] !== null) ? (string) $row[$startcol + 5] : null;
+			$this->system_name = ($row[$startcol + 6] !== null) ? (string) $row[$startcol + 6] : null;
+			$this->description = ($row[$startcol + 7] !== null) ? (string) $row[$startcol + 7] : null;
+			$this->status = ($row[$startcol + 8] !== null) ? (int) $row[$startcol + 8] : null;
+			$this->type = ($row[$startcol + 9] !== null) ? (int) $row[$startcol + 9] : null;
+			$this->tags = ($row[$startcol + 10] !== null) ? (string) $row[$startcol + 10] : null;
+			$this->host_name = ($row[$startcol + 11] !== null) ? (string) $row[$startcol + 11] : null;
+			$this->playback_host_name = ($row[$startcol + 12] !== null) ? (string) $row[$startcol + 12] : null;
+			$this->parent_id = ($row[$startcol + 13] !== null) ? (int) $row[$startcol + 13] : null;
+			$this->custom_data = ($row[$startcol + 14] !== null) ? (string) $row[$startcol + 14] : null;
 			$this->resetModified();
 
 			$this->setNew(false);
@@ -809,7 +908,7 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 			}
 
 			// FIXME - using NUM_COLUMNS may be clearer.
-			return $startcol + 14; // 14 = EdgeServerPeer::NUM_COLUMNS - EdgeServerPeer::NUM_LAZY_LOAD_COLUMNS).
+			return $startcol + 15; // 15 = EdgeServerPeer::NUM_COLUMNS - EdgeServerPeer::NUM_LAZY_LOAD_COLUMNS).
 
 		} catch (Exception $e) {
 			throw new PropelException("Error populating EdgeServer object", $e);
@@ -1165,7 +1264,9 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 		if($this->isModified())
 		{
 			kQueryCache::invalidateQueryCache($this);
-			kEventsManager::raiseEvent(new kObjectChangedEvent($this, $this->tempModifiedColumns));
+			$modifiedColumns = $this->tempModifiedColumns;
+			$modifiedColumns[kObjectChangedEvent::CUSTOM_DATA_OLD_VALUES] = $this->oldCustomDataValues;
+			kEventsManager::raiseEvent(new kObjectChangedEvent($this, $modifiedColumns));
 		}
 			
 		$this->tempModifiedColumns = array();
@@ -1333,36 +1434,39 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 				return $this->getUpdatedAt();
 				break;
 			case 3:
-				return $this->getPartnerId();
+				return $this->getHeartbeatTime();
 				break;
 			case 4:
-				return $this->getName();
+				return $this->getPartnerId();
 				break;
 			case 5:
-				return $this->getSystemName();
+				return $this->getName();
 				break;
 			case 6:
-				return $this->getDescription();
+				return $this->getSystemName();
 				break;
 			case 7:
-				return $this->getStatus();
+				return $this->getDescription();
 				break;
 			case 8:
-				return $this->getType();
+				return $this->getStatus();
 				break;
 			case 9:
-				return $this->getTags();
+				return $this->getType();
 				break;
 			case 10:
-				return $this->getHostName();
+				return $this->getTags();
 				break;
 			case 11:
-				return $this->getPlaybackHostName();
+				return $this->getHostName();
 				break;
 			case 12:
-				return $this->getParentId();
+				return $this->getPlaybackHostName();
 				break;
 			case 13:
+				return $this->getParentId();
+				break;
+			case 14:
 				return $this->getCustomData();
 				break;
 			default:
@@ -1389,17 +1493,18 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 			$keys[0] => $this->getId(),
 			$keys[1] => $this->getCreatedAt(),
 			$keys[2] => $this->getUpdatedAt(),
-			$keys[3] => $this->getPartnerId(),
-			$keys[4] => $this->getName(),
-			$keys[5] => $this->getSystemName(),
-			$keys[6] => $this->getDescription(),
-			$keys[7] => $this->getStatus(),
-			$keys[8] => $this->getType(),
-			$keys[9] => $this->getTags(),
-			$keys[10] => $this->getHostName(),
-			$keys[11] => $this->getPlaybackHostName(),
-			$keys[12] => $this->getParentId(),
-			$keys[13] => $this->getCustomData(),
+			$keys[3] => $this->getHeartbeatTime(),
+			$keys[4] => $this->getPartnerId(),
+			$keys[5] => $this->getName(),
+			$keys[6] => $this->getSystemName(),
+			$keys[7] => $this->getDescription(),
+			$keys[8] => $this->getStatus(),
+			$keys[9] => $this->getType(),
+			$keys[10] => $this->getTags(),
+			$keys[11] => $this->getHostName(),
+			$keys[12] => $this->getPlaybackHostName(),
+			$keys[13] => $this->getParentId(),
+			$keys[14] => $this->getCustomData(),
 		);
 		return $result;
 	}
@@ -1441,36 +1546,39 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 				$this->setUpdatedAt($value);
 				break;
 			case 3:
-				$this->setPartnerId($value);
+				$this->setHeartbeatTime($value);
 				break;
 			case 4:
-				$this->setName($value);
+				$this->setPartnerId($value);
 				break;
 			case 5:
-				$this->setSystemName($value);
+				$this->setName($value);
 				break;
 			case 6:
-				$this->setDescription($value);
+				$this->setSystemName($value);
 				break;
 			case 7:
-				$this->setStatus($value);
+				$this->setDescription($value);
 				break;
 			case 8:
-				$this->setType($value);
+				$this->setStatus($value);
 				break;
 			case 9:
-				$this->setTags($value);
+				$this->setType($value);
 				break;
 			case 10:
-				$this->setHostName($value);
+				$this->setTags($value);
 				break;
 			case 11:
-				$this->setPlaybackHostName($value);
+				$this->setHostName($value);
 				break;
 			case 12:
-				$this->setParentId($value);
+				$this->setPlaybackHostName($value);
 				break;
 			case 13:
+				$this->setParentId($value);
+				break;
+			case 14:
 				$this->setCustomData($value);
 				break;
 		} // switch()
@@ -1500,17 +1608,18 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 		if (array_key_exists($keys[0], $arr)) $this->setId($arr[$keys[0]]);
 		if (array_key_exists($keys[1], $arr)) $this->setCreatedAt($arr[$keys[1]]);
 		if (array_key_exists($keys[2], $arr)) $this->setUpdatedAt($arr[$keys[2]]);
-		if (array_key_exists($keys[3], $arr)) $this->setPartnerId($arr[$keys[3]]);
-		if (array_key_exists($keys[4], $arr)) $this->setName($arr[$keys[4]]);
-		if (array_key_exists($keys[5], $arr)) $this->setSystemName($arr[$keys[5]]);
-		if (array_key_exists($keys[6], $arr)) $this->setDescription($arr[$keys[6]]);
-		if (array_key_exists($keys[7], $arr)) $this->setStatus($arr[$keys[7]]);
-		if (array_key_exists($keys[8], $arr)) $this->setType($arr[$keys[8]]);
-		if (array_key_exists($keys[9], $arr)) $this->setTags($arr[$keys[9]]);
-		if (array_key_exists($keys[10], $arr)) $this->setHostName($arr[$keys[10]]);
-		if (array_key_exists($keys[11], $arr)) $this->setPlaybackHostName($arr[$keys[11]]);
-		if (array_key_exists($keys[12], $arr)) $this->setParentId($arr[$keys[12]]);
-		if (array_key_exists($keys[13], $arr)) $this->setCustomData($arr[$keys[13]]);
+		if (array_key_exists($keys[3], $arr)) $this->setHeartbeatTime($arr[$keys[3]]);
+		if (array_key_exists($keys[4], $arr)) $this->setPartnerId($arr[$keys[4]]);
+		if (array_key_exists($keys[5], $arr)) $this->setName($arr[$keys[5]]);
+		if (array_key_exists($keys[6], $arr)) $this->setSystemName($arr[$keys[6]]);
+		if (array_key_exists($keys[7], $arr)) $this->setDescription($arr[$keys[7]]);
+		if (array_key_exists($keys[8], $arr)) $this->setStatus($arr[$keys[8]]);
+		if (array_key_exists($keys[9], $arr)) $this->setType($arr[$keys[9]]);
+		if (array_key_exists($keys[10], $arr)) $this->setTags($arr[$keys[10]]);
+		if (array_key_exists($keys[11], $arr)) $this->setHostName($arr[$keys[11]]);
+		if (array_key_exists($keys[12], $arr)) $this->setPlaybackHostName($arr[$keys[12]]);
+		if (array_key_exists($keys[13], $arr)) $this->setParentId($arr[$keys[13]]);
+		if (array_key_exists($keys[14], $arr)) $this->setCustomData($arr[$keys[14]]);
 	}
 
 	/**
@@ -1525,6 +1634,7 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 		if ($this->isColumnModified(EdgeServerPeer::ID)) $criteria->add(EdgeServerPeer::ID, $this->id);
 		if ($this->isColumnModified(EdgeServerPeer::CREATED_AT)) $criteria->add(EdgeServerPeer::CREATED_AT, $this->created_at);
 		if ($this->isColumnModified(EdgeServerPeer::UPDATED_AT)) $criteria->add(EdgeServerPeer::UPDATED_AT, $this->updated_at);
+		if ($this->isColumnModified(EdgeServerPeer::HEARTBEAT_TIME)) $criteria->add(EdgeServerPeer::HEARTBEAT_TIME, $this->heartbeat_time);
 		if ($this->isColumnModified(EdgeServerPeer::PARTNER_ID)) $criteria->add(EdgeServerPeer::PARTNER_ID, $this->partner_id);
 		if ($this->isColumnModified(EdgeServerPeer::NAME)) $criteria->add(EdgeServerPeer::NAME, $this->name);
 		if ($this->isColumnModified(EdgeServerPeer::SYSTEM_NAME)) $criteria->add(EdgeServerPeer::SYSTEM_NAME, $this->system_name);
@@ -1617,6 +1727,8 @@ abstract class BaseEdgeServer extends BaseObject  implements Persistent {
 		$copyObj->setCreatedAt($this->created_at);
 
 		$copyObj->setUpdatedAt($this->updated_at);
+
+		$copyObj->setHeartbeatTime($this->heartbeat_time);
 
 		$copyObj->setPartnerId($this->partner_id);
 
