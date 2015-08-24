@@ -217,10 +217,21 @@ class KalturaEdgeServer extends KalturaObject implements IFilterable
 		if(is_null($object_to_fill))
 			$object_to_fill = new EdgeServer();
 		
-		
 		$object_to_fill =  parent::toObject($object_to_fill, $props_to_skip);
 		
 		return $object_to_fill;
+	}
+	
+	/* (non-PHPdoc)
+	 * @see KalturaObject::fromObject()
+	 */
+	public function doFromObject($source_object, KalturaDetachedResponseProfile $responseProfile = null)
+	{
+		/* @var $source_object EdgeServer */
+		parent::doFromObject($source_object, $responseProfile);
+		
+		if($source_object->getHeartbeatTime() < (time() - 90))
+			$this->status = EdgeServerStatus::NOT_REGISTERED;
 	}
 	
 	/* (non-PHPdoc)

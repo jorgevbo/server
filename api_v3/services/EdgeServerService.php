@@ -133,7 +133,6 @@ class EdgeServerService extends KalturaBaseService
 	 *
 	 * @action reportStatus
 	 * @param string $hostName
-	 * @param KalturaMediaServerStatus $mediaServerStatus
 	 * @return KalturaEdgeServer
 	 */
 	function reportStatusAction($hostName)
